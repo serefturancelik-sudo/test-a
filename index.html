@@ -1,1 +1,297 @@
+```html
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows Desktop Clone</title>
+    <style>
+        /* Temel Sıfırlamalar */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
 
+        /* Arka Plan */
+        body {
+            height: 100vh;
+            width: 100vw;
+            background: url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&q=80&w=2000') no-repeat center center/cover;
+            overflow: hidden;
+        }
+
+        /* Masaüstü İkon Alanı */
+        .desktop {
+            height: calc(100vh - 48px);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 15px;
+        }
+
+        /* İkon Stilleri */
+        .icon {
+            width: 80px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+
+        .icon:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .icon img {
+            width: 45px;
+            margin-bottom: 5px;
+        }
+
+        .icon span {
+            color: white;
+            font-size: 12px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* Görev Çubuğu (Taskbar) */
+        .taskbar {
+            height: 48px;
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(12px);
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .taskbar-left {
+            display: flex;
+            height: 100%;
+        }
+
+        .start-btn {
+            width: 48px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .start-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .start-btn svg {
+            width: 24px;
+            fill: #00a4ef;
+        }
+
+        /* Saat ve Tarih */
+        .taskbar-right {
+            padding: 0 15px;
+            color: white;
+            font-size: 12px;
+            text-align: right;
+            cursor: default;
+        }
+
+        /* Başlat Menüsü */
+        .start-menu {
+            position: fixed;
+            bottom: -600px;
+            left: 10px;
+            width: 400px;
+            height: 500px;
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 8px 8px 0 0;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: bottom 0.3s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+            color: white;
+            padding: 20px;
+            z-index: 999;
+        }
+
+        .start-menu.active {
+            bottom: 48px;
+        }
+
+        /* Pencere Yapısı */
+        .window {
+            position: absolute;
+            top: 100px;
+            left: 200px;
+            width: 500px;
+            height: 350px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .window-header {
+            background: #f3f3f3;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .close-btn {
+            color: #ff5f56;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .window-body {
+            padding: 20px;
+            color: #333;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Masaüstü İkonları -->
+    <div class="desktop" id="desktop">
+        <div class="icon" ondblclick="toggleWindow('pc-window')">
+            <img src="https://cdn-icons-png.flaticon.com/512/689/689311.png" alt="PC">
+            <span>Bu Bilgisayar</span>
+        </div>
+        <div class="icon" ondblclick="toggleWindow('folder-window')">
+            <img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" alt="Folder">
+            <span>Belgeler</span>
+        </div>
+        <div class="icon">
+            <img src="https://cdn-icons-png.flaticon.com/512/3245/3245417.png" alt="Recycle">
+            <span>Geri Dönüşüm</span>
+        </div>
+    </div>
+
+    <!-- Başlat Menüsü -->
+    <div class="start-menu" id="startMenu">
+        <h3>Sabitlenmiş Uygulamalar</h3>
+        <p style="margin-top:20px; opacity: 0.6;">Burada Windows uygulamaları yer alır...</p>
+    </div>
+
+    <!-- Örnek Pencere -->
+    <div class="window" id="pc-window">
+        <div class="window-header">
+            <span>Bu Bilgisayar</span>
+            <div class="window-controls">
+                <span onclick="toggleWindow('pc-window')" class="close-btn">✕</span>
+            </div>
+        </div>
+        <div class="window-body">
+            <p>Sürücüler ve Cihazlar (C:)</p>
+            <hr><br>
+            <p>Sistem Dosyaları Yükleniyor...</p>
+        </div>
+    </div>
+
+    <!-- Görev Çubuğu -->
+    <div class="taskbar">
+        <div class="taskbar-left">
+            <div class="start-btn" id="startBtn">
+                <svg viewBox="0 0 88 88"><path d="M0 12.402l35.687-4.86.016 34.423-35.67.03zM0 47.134l35.687.031v34.464l-35.687-4.924zM39.17 6.877l48.83-7.147v42.303l-48.83.051zM39.17 47.164l48.83.047v42.213l-48.83-7.23z"/></svg>
+            </div>
+        </div>
+        <div class="taskbar-right">
+            <div id="clock">00:00</div>
+            <div id="date">01.01.2024</div>
+        </div>
+    </div>
+
+    <script>
+        // Saat ve Tarih Güncelleme
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('tr-TR');
+            document.getElementById('clock').textContent = timeStr;
+            document.getElementById('date').textContent = dateStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Başlat Menüsü Kontrolü
+        const startBtn = document.getElementById('startBtn');
+        const startMenu = document.getElementById('startMenu');
+
+        startBtn.addEventListener('click', (e) => {
+            startMenu.classList.toggle('active');
+            e.stopPropagation();
+        });
+
+        // Masaüstüne tıklandığında menüyü kapat
+        document.addEventListener('click', (e) => {
+            if (!startMenu.contains(e.target) && e.target !== startBtn) {
+                startMenu.classList.remove('active');
+            }
+        });
+
+        // Pencere Açma/Kapatma
+        function toggleWindow(id) {
+            const win = document.getElementById(id);
+            if (win.style.display === 'flex') {
+                win.style.display = 'none';
+            } else {
+                win.style.display = 'flex';
+                // Rastgele konumlama (opsiyonel)
+                win.style.top = '150px';
+                win.style.left = '250px';
+            }
+        }
+
+        // Basit Sürükle Bırak (Pencere için)
+        const windows = document.querySelectorAll('.window');
+        windows.forEach(win => {
+            const header = win.querySelector('.window-header');
+            let isDragging = false;
+            let offset = { x: 0, y: 0 };
+
+            header.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                offset.x = e.clientX - win.offsetLeft;
+                offset.y = e.clientY - win.offsetTop;
+                win.style.zIndex = 100;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    win.style.left = (e.clientX - offset.x) + 'px';
+                    win.style.top = (e.clientY - offset.y) + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        });
+    </script>
+</body>
+</html>
+```
