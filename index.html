@@ -1,248 +1,130 @@
-```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>macOS Clone</title>
-    <style>
-        /* Genel Değişkenler ve Reset */
-        :root {
-            --bar-bg: rgba(255, 255, 255, 0.3);
-            --blur: blur(15px);
-            --border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beko Mini Oyunlar</title>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            user-select: none;
-        }
+<style>
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+}
 
-        body, html {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
+#main{
+    display:none;
+}
 
-        /* Masaüstü Arkaplanı */
-        .desktop {
-            background: url('https://images.unsplash.com/photo-1611003228941-98a5216802ff?q=80&w=2548&auto=format&fit=crop') center/cover no-repeat;
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
+input{
+    padding:10px;
+    font-size:18px;
+}
 
-        /* Üst Menü Çubuğu (Menu Bar) */
-        .top-bar {
-            height: 25px;
-            background: var(--bar-bg);
-            backdrop-filter: var(--blur);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px;
-            color: white;
-            font-size: 13px;
-            font-weight: 500;
-            z-index: 100;
-        }
+button{
+    padding:10px 20px;
+    font-size:18px;
+    margin:10px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
 
-        .menu-left, .menu-right {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
+.game{
+    background:#222;
+    width:250px;
+    margin:20px auto;
+    padding:20px;
+    border-radius:15px;
+}
 
-        .apple-icon {
-            font-size: 18px;
-        }
+#ai{
+    position:fixed;
+    right:15px;
+    bottom:15px;
+    background:#333;
+    padding:15px;
+    border-radius:15px;
+    width:220px;
+}
+</style>
 
-        /* Dock (Alt Menü) */
-        .dock-container {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bar-bg);
-            backdrop-filter: var(--blur);
-            padding: 8px;
-            border-radius: 18px;
-            display: flex;
-            gap: 12px;
-            border: var(--border);
-            z-index: 100;
-        }
-
-        .dock-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            background: white;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .dock-icon:hover {
-            transform: scale(1.4) translateY(-10px);
-        }
-
-        .dock-icon img {
-            width: 80%;
-        }
-
-        /* Örnek Uygulama Penceresi */
-        .window {
-            position: absolute;
-            top: 100px;
-            left: 100px;
-            width: 600px;
-            height: 400px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            display: none; /* Varsayılan kapalı */
-        }
-
-        .window-header {
-            height: 40px;
-            background: #ebebeb;
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            cursor: move;
-        }
-
-        .window-controls {
-            display: flex;
-            gap: 8px;
-        }
-
-        .control {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .close { background: #ff5f56; }
-        .minimize { background: #ffbd2e; }
-        .maximize { background: #27c93f; }
-
-        .window-content {
-            padding: 20px;
-            flex: 1;
-            color: #333;
-        }
-
-    </style>
 </head>
 <body>
 
-    <div class="desktop">
-        <!-- Üst Bar -->
-        <nav class="top-bar">
-            <div class="menu-left">
-                <span class="apple-icon"></span>
-                <span>Finder</span>
-                <span>Dosya</span>
-                <span>Düzen</span>
-                <span>Git</span>
-            </div>
-            <div class="menu-right">
-                <span id="clock">00:00</span>
-            </div>
-        </nav>
+<h1>🎮 Beko Mini Oyunlar</h1>
 
-        <!-- Örnek Pencere: Finder -->
-        <div class="window" id="finder-window">
-            <div class="window-header">
-                <div class="window-controls">
-                    <div class="control close" onclick="toggleWindow('finder-window')"></div>
-                    <div class="control minimize"></div>
-                    <div class="control maximize"></div>
-                </div>
-            </div>
-            <div class="window-content">
-                <h2>Hoş Geldiniz</h2>
-                <p>Bu basit bir macOS arayüz klonudur.</p>
-            </div>
-        </div>
+<div id="login">
 
-        <!-- Dock -->
-        <div class="dock-container">
-            <div class="dock-icon" onclick="toggleWindow('finder-window')">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Finder_Icon_macOS_Big_Sur.png" alt="Finder">
-            </div>
-            <div class="dock-icon">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/a/af/Safari_gradient.png" alt="Safari">
-            </div>
-            <div class="dock-icon">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Apple_Messages_logo.png" alt="Messages">
-            </div>
-            <div class="dock-icon">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Apple_Music_logo.png" alt="Music">
-            </div>
-            <div class="dock-icon">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/App_Store_%28iOS%29.svg" alt="AppStore">
-            </div>
-        </div>
-    </div>
+<h2>Adını Gir</h2>
 
-    <script>
-        // Saat Güncelleme Fonksiyonu
-        function updateClock() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('clock').textContent = `${hours}:${minutes}`;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
+<input id="name" placeholder="Adın">
 
-        // Pencere Açma/Kapatma
-        function toggleWindow(id) {
-            const win = document.getElementById(id);
-            if (win.style.display === "flex") {
-                win.style.display = "none";
-            } else {
-                win.style.display = "flex";
-            }
-        }
+<br>
 
-        // Basit Sürükleme Mantığı
-        const win = document.getElementById('finder-window');
-        const header = win.querySelector('.window-header');
-        let isDragging = false;
-        let offsetX, offsetY;
+<button onclick="start()">Başla</button>
 
-        header.onmousedown = (e) => {
-            isDragging = true;
-            offsetX = e.clientX - win.offsetLeft;
-            offsetY = e.clientY - win.offsetTop;
-        };
+</div>
 
-        window.onmousemove = (e) => {
-            if (isDragging) {
-                win.style.left = (e.clientX - offsetX) + 'px';
-                win.style.top = (e.clientY - offsetY) + 'px';
-            }
-        };
+<div id="main">
 
-        window.onmouseup = () => {
-            isDragging = false;
-        };
-    </script>
+<h2>Hoş geldin <span id="player"></span> 👋</h2>
+
+<h2>💰 Para: <span id="money">1</span> TL</h2>
+
+<div class="game">
+<h2>🍄 Mario</h2>
+<p>Yakında...</p>
+</div>
+
+<div class="game">
+<h2>⛏️ Mini Minecraft 2D</h2>
+<p>Yakında...</p>
+</div>
+
+</div>
+
+<div id="ai">
+🤖 <span id="message">Merhaba!</span>
+</div>
+
+<script>
+
+function start(){
+
+let isim=document.getElementById("name").value;
+
+if(isim=="") return;
+
+document.getElementById("player").innerHTML=isim;
+
+document.getElementById("login").style.display="none";
+
+document.getElementById("main").style.display="block";
+
+}
+
+let mesajlar=[
+"Merhaba! 👋",
+"Mario'yu denedin mi? 🍄",
+"Mini Minecraft yakında! ⛏️",
+"Bol şans! 🎮",
+"TL kazanmaya devam et! 💰",
+"Yeni oyunlar gelecek! ⭐",
+"İyi eğlenceler! 😄",
+"See you! 👋"
+];
+
+setInterval(function(){
+
+let r=Math.floor(Math.random()*mesajlar.length);
+
+document.getElementById("message").innerHTML=mesajlar[r];
+
+},4000);
+
+</script>
+
 </body>
 </html>
-```
