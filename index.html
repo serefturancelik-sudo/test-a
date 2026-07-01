@@ -1,118 +1,101 @@
-
 ```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mario V6</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Beko Mini Oyunlar - Tam Sürüm</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #64b5f6; font-family: sans-serif; }
-        #game-container { width: 100vw; height: 100vh; position: relative; }
-        
-        .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #8b4513; border-top: 5px solid #2e7d32; }
-        
-        #mario { 
-            width: 40px; height: 40px; background: red; 
-            position: absolute; bottom: 60px; left: 50px; 
-            transition: bottom 0.1s ease-out; z-index: 10;
-        }
-        
-        /* Engel stili - Görünür olması için belirginleştirildi */
-        .obstacle { 
-            width: 35px; height: 45px; background: #2e7d32; 
-            position: absolute; bottom: 60px; z-index: 5;
-            border: 2px solid #1b5e20;
-        }
-        
-        #info-panel { 
-            position: absolute; top: 20px; right: 20px; 
-            background: #1a1a1a; color: #fff; padding: 15px; 
-            border-radius: 12px; width: 140px; z-index: 20;
-        }
-        
-        #jump-btn { 
-            position: absolute; bottom: 40px; right: 20px; 
-            width: 150px; height: 70px; background: #ff5252; 
-            border: none; color: white; font-weight: bold; 
-            font-size: 20px; border-radius: 10px; z-index: 20;
-        }
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+        #game-view { width: 100vw; height: 100vh; background: linear-gradient(#5c94fc, #93c5fd); position: relative; }
+        #mario { position: absolute; bottom: 50px; left: 60px; width: 40px; height: 48px; background: red; border-radius: 4px; z-index: 20; }
+        #ground { position: absolute; bottom: 0; width: 100%; height: 50px; background: #8b4513; border-top: 5px solid #22c55e; }
+        .obstacle { position: absolute; bottom: 50px; width: 40px; height: 60px; background: #16a34a; border: 2px solid #064e3b; }
+        #menu-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: white; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="info-panel">
-        <div>Level: 1</div>
-        <div>Hız: 4.2</div>
-        <div>Bakiye: <span id="bakiye">586</span> TL</div>
-        <div>İlerleme: <span id="ilerleme">0</span> / 350m</div>
+<div id="game-view">
+    <div id="menu-overlay">
+        <h1>BEKO MARIO</h1>
+        <input type="text" id="playerName" placeholder="Adın ne, Çipil?" style="padding:10px; margin:20px;">
+        <button onclick="startCompleteGame()" style="padding:10px 30px; font-size:20px;">OYUNU BAŞLAT</button>
     </div>
-
     <div id="mario"></div>
-    <div class="ground"></div>
-    <button id="jump-btn">⚡ ZIPLA!<br><small>3 HAK</small></button>
+    <div id="ground"></div>
 </div>
 
 <script>
+    const gameView = document.getElementById('game-view');
     const mario = document.getElementById('mario');
-    const ilerlemeEl = document.getElementById('ilerleme');
+    let gameActive = false;
+    let velocityY = 0;
     let isJumping = false;
-    let distance = 0;
 
-    function jump() {
-        if (isJumping) return;
-        isJumping = true;
-        let pos = 0;
-        let timer = setInterval(() => {
-            if (pos >= 120) {
-                clearInterval(timer);
-                let down = setInterval(() => {
-                    if (pos <= 0) {
-                        clearInterval(down);
-                        isJumping = false;
-                    } else {
-                        pos -= 10;
-                        mario.style.bottom = (60 + pos) + 'px';
-                    }
-                }, 30);
-            } else {
-                pos += 10;
-                mario.style.bottom = (60 + pos) + 'px';
-            }
-        }, 30);
+    function startCompleteGame() {
+        document.getElementById('menu-overlay').style.display = 'none';
+        gameActive = true;
+        gameLoop();
+        spawnLogic();
     }
 
-    function spawnObstacle() {
-        const obs = document.createElement('div');
-        obs.classList.add('obstacle');
-        obs.style.left = '100vw';
-        document.getElementById('game-container').appendChild(obs);
+    // ENGEL SPAWN MANTIĞI: TAM EKRAN SAĞ SINIRINDAN
+    function spawnLogic() {
+        if (!gameActive) return;
+        
+        const obstacle = document.createElement('div');
+        obstacle.className = 'obstacle';
+        // Tam ekran genişliğini al ve oradan başlat (Kritik nokta)
+        let xPos = window.innerWidth;
+        obstacle.style.left = xPos + 'px';
+        gameView.appendChild(obstacle);
 
-        let obsPos = window.innerWidth;
-        let move = setInterval(() => {
-            obsPos -= 10;
-            obs.style.left = obsPos + 'px';
+        function moveObstacle() {
+            if (!gameActive) return;
+            xPos -= 7; // Oyun hızı
+            obstacle.style.left = xPos + 'px';
 
-            // Çarpışma: Mario'nun konumu ile engelin konumu çakışırsa
-            if (obsPos < 90 && obsPos > 50 && parseInt(mario.style.bottom) < 100) {
-                clearInterval(move);
-                alert("Engellere çarptın!");
-                location.reload();
+            // Çarpışma kontrolü
+            if (xPos < 100 && xPos > 40 && parseInt(mario.style.bottom) < 110) {
+                gameOver();
             }
 
-            if (obsPos < -50) {
-                clearInterval(move);
-                obs.remove();
-                distance += 50;
-                ilerlemeEl.innerText = distance;
-            }
-        }, 30);
-        setTimeout(spawnObstacle, 2000);
+            if (xPos < -60) obstacle.remove();
+            else requestAnimationFrame(moveObstacle);
+        }
+        moveObstacle();
+        setTimeout(spawnLogic, 1200 + Math.random() * 800);
     }
 
-    document.getElementById('jump-btn').addEventListener('click', jump);
-    spawnObstacle();
+    function gameLoop() {
+        if (!gameActive) return;
+        // Basit yer çekimi simülasyonu
+        if (isJumping) {
+            velocityY -= 0.8;
+            let currentBottom = parseInt(mario.style.bottom);
+            mario.style.bottom = (currentBottom + velocityY) + 'px';
+            if (currentBottom <= 50) {
+                mario.style.bottom = '50px';
+                isJumping = false;
+                velocityY = 0;
+            }
+        }
+        requestAnimationFrame(gameLoop);
+    }
+
+    window.addEventListener('mousedown', () => {
+        if (!isJumping && gameActive) {
+            isJumping = true;
+            velocityY = 15;
+        }
+    });
+
+    function gameOver() {
+        gameActive = false;
+        alert("Oyun bitti, Çipil!");
+        location.reload();
+    }
 </script>
 </body>
 </html>
