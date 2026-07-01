@@ -2,430 +2,996 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Beko Mini Oyunlar - Mario Prototip</title>
-    <!-- Tailwind CSS ve FontAwesome ikonları -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-        }
-        /* Oyun Alanı Arka Planı (Gökyüzü ve bulutlar) */
-        #game-canvas {
-            background: linear-gradient(to bottom, #3b82f6, #93c5fd);
-            image-rendering: pixelated;
-        }
-        /* Mario karakteri ve animasyonları */
-        .mario {
-            transition: transform 0.1s;
-        }
-        .mario.running {
-            animation: runAnim 0.2s infinite steps(2);
-        }
-        @keyframes runAnim {
-            0% { filter: brightness(1); }
-            100% { filter: brightness(1.1); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Beko Mini Oyunlar</title>
+<!-- FontAwesome İkonları -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* GENEL VE LOBİ STİLLERİ (Senin Orijinal Tasarımın) */
+body {
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow-x: hidden;
+}
+
+#login, #main {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#main {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    font-size: 26px;
+    margin-top: 40px;
+    margin-bottom: 25px;
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 20px;
+    margin-bottom: 15px;
+}
+
+#money-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    color: #facc15;
+}
+
+input {
+    padding: 12px;
+    font-size: 18px;
+    width: 80%;
+    max-width: 280px;
+    background: #222;
+    border: 1px solid #333;
+    color: white;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 15px;
+    outline: none;
+}
+
+button {
+    padding: 12px 24px;
+    font-size: 16px;
+    margin: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    background: #f3f4f6;
+    color: black;
+    transition: transform 0.1s;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+/* OYUN KARTLARI (Birebir Senin Tasarımın) */
+.game {
+    background: #222;
+    width: 100%;
+    max-width: 300px;
+    margin: 15px auto;
+    padding: 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    border: 1px solid #2d2d2d;
+    transition: transform 0.1s, background 0.2s;
+}
+
+.game:active {
+    transform: scale(0.97);
+    background: #282828;
+}
+
+.game p {
+    color: #888;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+/* ROBOT BİLGİ KUTUSU (Birebir Senin Tasarımın) */
+#ai {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 15px;
+    background: #222;
+    padding: 15px;
+    border-radius: 15px;
+    width: 260px;
+    border: 1px solid #333;
+    font-size: 13px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 40;
+}
+
+/* MARIO TAM EKRAN OYUN ALANI STİLLERİ */
+#mario-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 50;
+    overflow: hidden;
+    touch-action: none;
+}
+
+#mario-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #3b82f6, #93c5fd);
+}
+
+.cloud {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 40px;
+    pointer-events: none;
+}
+
+#mario-ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    background: #92400e;
+    border-top: 8px solid #22c55e;
+    z-index: 10;
+}
+
+#mario-char {
+    position: absolute;
+    bottom: 48px;
+    left: 48px;
+    width: 40px;
+    height: 48px;
+    z-index: 20;
+}
+
+/* Zıplama Hak Göstergeleri */
+.pips-container {
+    position: absolute;
+    top: -15px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+}
+
+.pip {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 1px solid rgba(0,0,0,0.4);
+}
+
+/* Çarpı (X) Çıkış Butonu */
+#exit-btn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 40px;
+    height: 40px;
+    background: #ef4444;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 3px solid #b91c1c;
+}
+
+#live-score-board {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0,0,0,0.8);
+    padding: 8px 15px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    font-weight: bold;
+    color: #fde047;
+    font-size: 14px;
+    z-index: 30;
+}
+
+#touch-jump-surface {
+    position: absolute;
+    inset: 0;
+    width: 70%;
+    z-index: 15;
+    cursor: pointer;
+}
+
+#right-jump-action-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 110px;
+    height: 60px;
+    background: #ef4444;
+    border: none;
+    border-bottom: 4px solid #b91c1c;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+#mario-objects-container {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    pointer-events: none;
+}
+
+/* Soru İşareti Bloğu CSS */
+.question-block-anim {
+    animation: qPulse 0.6s infinite alternate;
+}
+@keyframes qPulse {
+    0% { background-color: #eab308; }
+    100% { background-color: #ea580c; }
+}
+
+.jump-puff-effect {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    width: 30px;
+    height: 8px;
+    filter: blur(1px);
+    pointer-events: none;
+    z-index: 14;
+    animation: puffFade 0.25s forwards ease-out;
+}
+@keyframes puffFade {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(1.4); opacity: 0; }
+}
+
+#mario-start-overlay, #mario-over-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    gap: 15px;
+}
+
+#mario-start-overlay h3, #mario-over-overlay h3 {
+    font-size: 24px;
+    color: #ef4444;
+    font-weight: bold;
+}
+
+#mario-start-overlay p {
+    font-size: 13px;
+    color: #aaa;
+    max-width: 280px;
+    line-height: 1.5;
+}
+
+/* SİSTEM BİLDİRİMİ */
+#toast-notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, -80px);
+    background: #222;
+    border: 1px solid #333;
+    padding: 10px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    font-size: 13px;
+    color: white;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.3s ease-out;
+    pointer-events: none;
+}
+
+#toast-notification.show {
+    transform: translate(-50%, 0);
+}
+</style>
 </head>
-<body class="bg-zinc-950 text-white min-h-screen flex flex-col items-center justify-between font-sans overflow-hidden">
+<body>
 
-    <!-- ÜST BİLGİ PANELİ -->
-    <header class="w-full max-w-md p-4 flex justify-between items-center bg-zinc-900 border-b border-zinc-800 z-10">
-        <div class="flex items-center gap-2">
-            <span class="text-2xl">🍄</span>
-            <h1 class="text-lg font-bold tracking-wide text-red-500">Mario Prototip v1.0</h1>
-        </div>
-        <div class="flex items-center gap-2 bg-zinc-800 px-3 py-1.5 rounded-full border border-zinc-700">
-            <span class="text-yellow-400 font-bold">💰</span>
-            <span id="score-display" class="font-bold text-yellow-300">0 TL</span>
-        </div>
-    </header>
+    <!-- BİLDİRİM ALANI -->
+    <div id="toast-notification">
+        <span id="toast-emoji">🍄</span>
+        <span id="toast-message-text">Hazır!</span>
+    </div>
 
-    <!-- OYUN ALANI (CANVAS & GÖRSEL CONTAINER) -->
-    <main class="relative w-full max-w-md flex-1 flex flex-col items-center justify-center p-2">
-        <div id="game-container" class="relative w-full h-[320px] rounded-2xl overflow-hidden shadow-2xl border-4 border-zinc-800 bg-blue-400">
+    <h1>🎮 Beko Mini Oyunlar</h1>
+
+    <!-- 1. GİRİŞ EKRANI -->
+    <div id="login">
+        <h2>Adını Gir</h2>
+        <input id="name" placeholder="Adın">
+        <br>
+        <button onclick="start()">Başla</button>
+    </div>
+
+    <!-- 2. ANA EKRAN / LOBİ -->
+    <div id="main">
+        <h2>Hoş geldin <span id="player"></span> 👋</h2>
+        <h2 id="money-title">💰 Para: <span id="money">1</span> TL</h2>
+
+        <!-- Mario Oyun Kartı -->
+        <div class="game" onclick="launchMario()">
+            <h2>🍄 Mario</h2>
+            <p>Oynamak için tıkla!</p>
+        </div>
+
+        <!-- Minecraft Oyun Kartı -->
+        <div class="game">
+            <h2>⛏️ Mini Minecraft 2D</h2>
+            <p>Yakında...</p>
+        </div>
+    </div>
+
+    <!-- 3. TAM EKRAN MARIO OYUN KATMANI -->
+    <div id="mario-screen">
+        <div id="mario-viewport">
             
-            <!-- Gökyüzü Süsleri (Bulutlar) -->
-            <div class="absolute top-8 left-6 text-white/40 text-4xl"><i class="fa-solid fa-cloud"></i></div>
-            <div class="absolute top-16 right-12 text-white/30 text-3xl"><i class="fa-solid fa-cloud"></i></div>
-            <div class="absolute top-4 right-1/3 text-white/20 text-5xl"><i class="fa-solid fa-cloud"></i></div>
+            <!-- Gökyüzü Bulutları -->
+            <div class="cloud" style="top: 15%; left: 10%;"><i class="fa-solid fa-cloud"></i></div>
+            <div class="cloud" style="top: 25%; right: 15%;"><i class="fa-solid fa-cloud"></i></div>
 
-            <!-- Arka Plandaki Dağlar -->
-            <div class="absolute bottom-12 left-0 right-0 h-16 flex items-end opacity-40 pointer-events-none">
-                <div class="w-24 h-12 bg-emerald-600 rounded-t-full"></div>
-                <div class="w-32 h-16 bg-emerald-500 rounded-t-full -ml-8"></div>
-                <div class="w-20 h-10 bg-emerald-600 rounded-t-full -ml-4"></div>
+            <!-- Yer Zemin -->
+            <div id="mario-ground">
+                <div style="width: 100%; height: 100%; opacity: 0.15; background: linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent); background-size: 10px 10px;"></div>
             </div>
 
-            <!-- Yer/Zemin Katmanı (Çimen ve Toprak) -->
-            <div class="absolute bottom-0 left-0 right-0 h-12 bg-amber-800 border-t-8 border-green-500 z-10 flex overflow-hidden">
-                <!-- Zemin dokusu için küçük çizgiler -->
-                <div class="w-full h-full opacity-10 bg-[linear-gradient(45deg,#000_25%,transparent_25%,transparent_50%,#000_50%,#000_75%,transparent_75%,transparent)] bg-[size:10px_10px]"></div>
-            </div>
-
-            <!-- MARIO KARAKTERİ -->
-            <div id="mario" class="absolute bottom-12 left-10 w-10 h-12 z-20 flex flex-col items-center justify-end transform transition-all duration-75">
-                <!-- Sevimli SVG Mario Karakteri (Dış kaynak görsele bağımlı olmamak için) -->
-                <svg viewBox="0 0 40 48" class="w-full h-full drop-shadow-md">
+            <!-- Gerçek Pikselli Retro Mario Karakteri -->
+            <div id="mario-char">
+                <div class="pips-container">
+                    <div id="pip-1" class="pip"></div>
+                    <div id="pip-2" class="pip"></div>
+                    <div id="pip-3" class="pip"></div>
+                </div>
+                <!-- Mario Klasik Pixel Art SVG Çizimi -->
+                <svg viewBox="0 0 16 16" class="w-full h-full" style="image-rendering: pixelated; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.4));">
                     <!-- Şapka -->
-                    <path d="M 8,12 L 32,12 L 32,4 L 8,4 Z" fill="#ef4444" />
-                    <path d="M 12,8 L 36,8 C 36,8 38,12 36,12 L 12,12 Z" fill="#ef4444" />
-                    <!-- Yüz / Ten -->
-                    <rect x="12" y="12" width="20" height="12" fill="#fed7aa" />
-                    <!-- Saç & Bıyık -->
-                    <rect x="8" y="16" width="6" height="8" fill="#78350f" />
-                    <rect x="24" y="20" width="10" height="4" fill="#78350f" />
-                    <!-- Göz -->
-                    <rect x="24" y="14" width="4" height="4" fill="#000" />
-                    <!-- Kıyafet (Tulum) -->
-                    <rect x="10" y="24" width="20" height="14" fill="#ef4444" />
-                    <path d="M 12,24 L 16,24 L 16,38 L 12,38 Z" fill="#3b82f6" />
-                    <path d="M 24,24 L 28,24 L 28,38 L 24,38 Z" fill="#3b82f6" />
-                    <rect x="16" y="28" width="8" height="10" fill="#3b82f6" />
+                    <rect x="3" y="1" width="9" height="1" fill="#f00"/>
+                    <rect x="2" y="2" width="5" height="1" fill="#f00"/>
+                    <!-- Saç ve Bıyık -->
+                    <rect x="2" y="3" width="3" height="3" fill="#640"/>
+                    <rect x="6" y="5" width="4" height="1" fill="#640"/>
+                    <!-- Yüz / Ten rengi -->
+                    <rect x="5" y="2" width="4" height="3" fill="#fcc"/>
+                    <rect x="4" y="3" width="5" height="2" fill="#fcc"/>
+                    <rect x="3" y="4" width="7" height="1" fill="#fcc"/>
+                    <rect x="3" y="5" width="3" height="1" fill="#fcc"/>
+                    <rect x="5" y="5" width="1" height="1" fill="#000"/> <!-- Göz -->
+                    <rect x="4" y="6" width="5" height="1" fill="#fcc"/>
+                    <!-- Tulum / Gövde (Mavi) -->
+                    <rect x="3" y="7" width="8" height="6" fill="#00f"/>
+                    <!-- Kollar (Kırmızı) -->
+                    <rect x="2" y="8" width="2" height="4" fill="#f00"/>
+                    <rect x="10" y="8" width="2" height="4" fill="#f00"/>
+                    <rect x="4" y="7" width="6" height="1" fill="#f00"/>
                     <!-- Sarı Düğmeler -->
-                    <circle cx="15" cy="31" r="1.5" fill="#eab308" />
-                    <circle cx="25" cy="31" r="1.5" fill="#eab308" />
-                    <!-- Ayakkabılar -->
-                    <rect x="8" y="38" width="10" height="4" fill="#78350f" rx="1" />
-                    <rect x="22" y="38" width="10" height="4" fill="#78350f" rx="1" />
+                    <rect x="5" y="9" width="1" height="1" fill="#ff0"/>
+                    <rect x="8" y="9" width="1" height="1" fill="#ff0"/>
+                    <!-- Ayakkabılar (Kahverengi) -->
+                    <rect x="2" y="13" width="4" height="2" fill="#640"/>
+                    <rect x="8" y="13" width="4" height="2" fill="#640"/>
                 </svg>
             </div>
 
-            <!-- AKTİF ENGELLER (DİNAMİK OLUŞTURULACAK) -->
-            <div id="obstacles-container" class="absolute inset-0 z-15 pointer-events-none"></div>
+            <!-- Nesnelerin Akacağı Katman -->
+            <div id="mario-objects-container"></div>
 
-            <!-- AKTİF PARALAR (DİNAMİK OLUŞTURULACAK) -->
-            <div id="coins-container" class="absolute inset-0 z-15 pointer-events-none"></div>
+            <!-- Geri Çıkış Butonu (Çarpı) -->
+            <button id="exit-btn" onclick="exitMario()"><i class="fa-solid fa-xmark"></i></button>
 
-            <!-- OYUN BİTTİ (GAME OVER) EKRANI -->
-            <div id="game-over-screen" class="absolute inset-0 bg-black/80 z-30 flex flex-col items-center justify-center gap-4 hidden">
-                <h2 class="text-3xl font-extrabold text-red-500 tracking-wider">OYUN BİTTİ!</h2>
-                <p class="text-zinc-400 text-sm">Arkadaşın bu skoru geçebilecek mi?</p>
-                <div class="bg-zinc-900 px-6 py-2 rounded-xl border border-zinc-700 flex items-center gap-2">
-                    <span class="text-yellow-400">💰 Toplam Kazanç:</span>
-                    <span id="final-score" class="font-bold text-yellow-300">0 TL</span>
-                </div>
-                <button onclick="resetGame()" class="px-6 py-3 bg-red-600 hover:bg-red-500 font-bold rounded-xl shadow-lg transform active:scale-95 transition-all text-white">
-                    <i class="fa-solid fa-rotate-right mr-2"></i>Tekrar Dene
-                </button>
-            </div>
+            <!-- Canlı Skor -->
+            <div id="live-score-board">💰 Kazanılan: <span id="mario-current-score">0</span> TL</div>
 
-            <!-- BAŞLANGIÇ EKRANI -->
-            <div id="start-screen" class="absolute inset-0 bg-zinc-950/90 z-30 flex flex-col items-center justify-center gap-4">
-                <span class="text-5xl animate-bounce">🍄</span>
-                <h2 class="text-2xl font-bold text-white">Mario Mekanik Testi</h2>
-                <p class="text-zinc-400 text-xs px-8 text-center">Engellerin üzerinden zıpla, altınları topla ve en yüksek parayı kazan!</p>
-                <button onclick="startGame()" class="px-8 py-3 bg-green-500 hover:bg-green-400 font-bold rounded-xl shadow-lg transform active:scale-95 transition-all text-black">
-                    <i class="fa-solid fa-play mr-2"></i>Oyunu Başlat
-                </button>
-            </div>
+            <!-- Sol Dokunmatik Zıplama Alanı -->
+            <div id="touch-jump-surface"></div>
 
-        </div>
-    </main>
-
-    <!-- MOBİL VE KLAVYE KONTROLLERİ -->
-    <footer class="w-full max-w-md p-4 bg-zinc-900 border-t border-zinc-800 flex flex-col gap-3 z-10">
-        <!-- Masaüstü Bilgilendirme -->
-        <p class="text-center text-xs text-zinc-500 hidden sm:block">Zıplamak için <kbd class="px-1.5 py-0.5 bg-zinc-800 rounded border border-zinc-700">Boşluk (Space)</kbd> veya <kbd class="px-1.5 py-0.5 bg-zinc-800 rounded border border-zinc-700">Yukarı Ok</kbd> tuşuna basın.</p>
-        
-        <!-- Dokunmatik Zıplama Butonu (Mobil için kocaman ve konforlu) -->
-        <div class="flex justify-center">
-            <button id="jump-btn" class="w-full py-4 bg-red-600 active:bg-red-700 rounded-2xl flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-transform">
-                <span class="text-2xl">⚡</span>
-                <span class="text-lg font-black tracking-wide">ZIPLA!</span>
+            <!-- Alternatif Sağ Zıplama Düğmesi -->
+            <button id="right-jump-action-btn">
+                <span>⚡ ZIPLA!</span>
+                <span style="font-size: 9px; opacity: 0.8;">3 HAK</span>
             </button>
-        </div>
-    </footer>
 
-    <!-- ALT TOST BİLDİRİMİ -->
-    <div id="toast" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-zinc-900 border border-zinc-800 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs transition-all duration-300 translate-y-10 opacity-0 pointer-events-none z-50">
-        <span id="toast-emoji">🤖</span>
-        <span id="toast-text" class="font-medium text-zinc-300">Merhaba!</span>
+            <!-- BAŞLANGIÇ PANELİ -->
+            <div id="mario-start-overlay">
+                <span style="font-size: 50px;" class="animate-bounce">🍄</span>
+                <h3>BEKO MARIO 2D</h3>
+                <p>Sondan gelen soru işareti bloklarına kafa atıp parayı kap! Engellere çarpmamaya dikkat et. Havada ardışık en fazla 3 kere zıplayabilirsin.</p>
+                <button onclick="startMarioGame()" style="background: #22c55e; color: black; max-width: 180px;">OYUNU BAŞLAT 🎮</button>
+            </div>
+
+            <!-- OYUN BİTTİ PANELİ -->
+            <div id="mario-over-overlay" style="display: none;">
+                <h3>OYUN BİTTİ!</h3>
+                <p style="font-size: 16px;">💰 Toplam Paran: <span id="mario-final-score" style="color: #fde047; font-weight: bold;">0</span> TL</p>
+                <div style="display: flex; gap: 10px; width: 100%; justify-content: center;">
+                    <button onclick="startMarioGame()" style="background: #22c55e; color: black;">Tekrar</button>
+                    <button onclick="exitMario()" style="background: #333; color: white;">Lobi</button>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <!-- OYUN MANTIĞI -->
+    <!-- 4. ROBOT BİLGİ KUTUSU (Senin Tasarımın) -->
+    <div id="ai">
+        🤖 <span id="message">Merhaba! 👋</span>
+    </div>
+
     <script>
-        // Oyun Durum Değişkenleri
-        let isPlaying = false;
-        let isJumping = false;
-        let score = 0;
-        let gameSpeed = 3.5;
-        let obstacleTimer = null;
-        let coinTimer = null;
-        let physicsInterval = null;
-        
-        const mario = document.getElementById('mario');
-        const gameContainer = document.getElementById('game-container');
-        const obstaclesContainer = document.getElementById('obstacles-container');
-        const coinsContainer = document.getElementById('coins-container');
-        const scoreDisplay = document.getElementById('score-display');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        const startScreen = document.getElementById('start-screen');
-        const finalScore = document.getElementById('final-score');
-        const toast = document.getElementById('toast');
+        // --- HESAP VE CÜZDAN PARAMETRELERİ ---
+        let activePlayerName = "";
+        let playerAccount = {
+            username: "",
+            money: 1 // Orijinal başlangıç paranız
+        };
 
-        // Mario Zıplama Ayarları
-        let marioY = 0; // Yerden yükseklik (0px)
-        let gravity = 1.2;
-        let jumpVelocity = 0;
-        const groundLevel = 48; // Yer yüksekliği (px)
-
-        // Oyunu Başlat
-        function startGame() {
-            startScreen.classList.add('hidden');
-            gameOverScreen.classList.add('hidden');
-            isPlaying = true;
-            score = 0;
-            gameSpeed = 3.5;
-            scoreDisplay.innerText = "0 TL";
-            
-            // Tüm eski nesneleri temizle
-            obstaclesContainer.innerHTML = '';
-            coinsContainer.innerHTML = '';
-
-            // Fizik Döngüsü
-            physicsInterval = setInterval(updatePhysics, 1000/60);
-
-            // Dinamik Engel ve Para Üreticileri
-            scheduleObstacle();
-            scheduleCoin();
-
-            showToast("🎮 Oyun başladı! Başarılar!", "🤖");
-        }
-
-        // Fizik ve Çarpışma Kontrolleri
-        function updatePhysics() {
-            if (!isPlaying) return;
-
-            // Yerçekimi ve Zıplama Fiziği
-            if (isJumping) {
-                jumpVelocity -= gravity;
-                marioY += jumpVelocity;
-
-                if (marioY <= 0) {
-                    marioY = 0;
-                    isJumping = false;
-                    jumpVelocity = 0;
-                }
-                mario.style.bottom = `${groundLevel + marioY}px`;
+        // --- GİRİŞ BAŞLATMA FONKSİYONU ---
+        function start() {
+            let nameInput = document.getElementById("name").value.trim();
+            if (nameInput === "") {
+                triggerToast("Lütfen bir isim girin!", "🤖");
+                return;
             }
 
-            // Engelleri ve Paraları Hareket Ettir
-            moveElements();
-        }
+            activePlayerName = nameInput;
 
-        // Zıplama Fonksiyonu
-        function jump() {
-            if (!isPlaying || isJumping) return;
-            isJumping = true;
-            jumpVelocity = 15; // Zıplama gücü
-            
-            // Zıplama sesi efekti simülasyonu
-            mario.style.transform = "scaleY(1.15)";
-            setTimeout(() => {
-                mario.style.transform = "scaleY(1)";
-            }, 150);
-        }
-
-        // Engelleri ve Paraları Sola Doğru Kaydır ve Çarpışma Kontrolü Yap
-        function moveElements() {
-            // 1. Engelleri Taşı ve Kontrol Et
-            const obstacles = obstaclesContainer.querySelectorAll('.obstacle');
-            obstacles.forEach(obs => {
-                let currentLeft = parseFloat(obs.style.left);
-                currentLeft -= gameSpeed;
-                obs.style.left = `${currentLeft}px`;
-
-                // Ekrandan çıktıysa sil
-                if (currentLeft < -30) {
-                    obs.remove();
-                }
-
-                // Çarpışma Kutusu Algılama (AABB Collision)
-                if (currentLeft > 35 && currentLeft < 75) {
-                    // Mario'nun dikey yüksekliğini kontrol et
-                    const obstacleHeight = parseInt(obs.style.height);
-                    if (marioY < obstacleHeight) {
-                        endGame();
-                    }
-                }
-            });
-
-            // 2. Paraları Taşı ve Toplamayı Kontrol Et
-            const coins = coinsContainer.querySelectorAll('.coin');
-            coins.forEach(coin => {
-                let currentLeft = parseFloat(coin.style.left);
-                currentLeft -= gameSpeed;
-                coin.style.left = `${currentLeft}px`;
-
-                // Ekrandan çıktıysa sil
-                if (currentLeft < -30) {
-                    coin.remove();
-                }
-
-                // Altın Toplama Kontrolü
-                if (currentLeft > 35 && currentLeft < 75) {
-                    const coinBottom = parseInt(coin.style.bottom);
-                    const marioTop = groundLevel + marioY + 48; // Mario kafası
-                    const marioBottom = groundLevel + marioY;
-
-                    // Mario dikey olarak altınla hizalıysa
-                    if (marioTop > coinBottom && marioBottom < (coinBottom + 20)) {
-                        collectCoin(coin);
-                    }
-                }
-            });
-        }
-
-        // Engel Oluşturma Zamanlaması
-        function scheduleObstacle() {
-            if (!isPlaying) return;
-            
-            const delay = Math.random() * 1500 + 1200; // Rastgele süre aralığı
-            obstacleTimer = setTimeout(() => {
-                createObstacle();
-                scheduleObstacle();
-            }, delay);
-        }
-
-        // Engel HTML Elementi Oluşturma (Etobur Bitki Borusu veya Taş)
-        function createObstacle() {
-            const isPipe = Math.random() > 0.4;
-            const obstacle = document.createElement('div');
-            obstacle.classList.add('obstacle', 'absolute', 'bottom-12');
-            obstacle.style.left = '100%';
-            
-            if (isPipe) {
-                // Yeşil Boru Tasarımı
-                const height = Math.random() > 0.5 ? 40 : 30; // Farklı boru boyları
-                obstacle.style.height = `${height}px`;
-                obstacle.style.width = '28px';
-                obstacle.innerHTML = `
-                    <div class="w-full h-full flex flex-col justify-between">
-                        <div class="h-4 bg-green-500 border-2 border-black rounded-sm shadow-md"></div>
-                        <div class="flex-1 bg-green-600 border-x-2 border-black shadow-inner"></div>
-                    </div>
-                `;
+            // Tarayıcı hafızasını denetle (Kayıtlı hesaba erişim)
+            let savedWallet = localStorage.getItem("beko_wallet_user_" + activePlayerName);
+            if (savedWallet) {
+                playerAccount = JSON.parse(savedWallet);
+                triggerToast(`Tekrar hoş geldin, ${activePlayerName}!`, "🔑");
             } else {
-                // Kırmızı Dikenli Engel Tasarımı
-                obstacle.style.height = '24px';
-                obstacle.style.width = '24px';
-                obstacle.innerHTML = `
-                    <div class="w-full h-full flex items-end justify-center">
-                        <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[24px] border-b-red-600 drop-shadow-md"></div>
-                    </div>
-                `;
+                playerAccount = {
+                    username: activePlayerName,
+                    money: 1 // Yeni hesap için başlangıç parası
+                };
+                saveDataToStorage();
+                triggerToast(`Hesap oluşturuldu! Hoş geldin ${activePlayerName}!`, "🆕");
             }
 
-            obstaclesContainer.appendChild(obstacle);
+            // Lobi Arayüz Değerlerini Güncelle
+            document.getElementById("player").innerText = playerAccount.username;
+            document.getElementById("money").innerText = playerAccount.money;
 
-            // Oyun zorluğunu kademeli arttır
-            if (gameSpeed < 7) gameSpeed += 0.05;
+            // Giriş panelini gizle, lobi ekranını göster
+            document.getElementById("login").style.display = "none";
+            document.getElementById("main").style.display = "flex";
         }
 
-        // Para Oluşturma Zamanlaması
-        function scheduleCoin() {
-            if (!isPlaying) return;
-
-            const delay = Math.random() * 800 + 600;
-            coinTimer = setTimeout(() => {
-                createCoin();
-                scheduleCoin();
-            }, delay);
+        function saveDataToStorage() {
+            if (activePlayerName) {
+                localStorage.setItem("beko_wallet_user_" + activePlayerName, JSON.stringify(playerAccount));
+            }
         }
 
-        // Para HTML Elementi Oluşturma
-        function createCoin() {
-            const coin = document.createElement('div');
-            coin.classList.add('coin', 'absolute', 'w-6', 'h-6', 'bg-yellow-400', 'border-2', 'border-yellow-600', 'rounded-full', 'shadow-md', 'flex', 'items-center', 'justify-center', 'animate-bounce');
-            coin.style.left = '100%';
-            
-            // Paranın çıkacağı yükseklik (Mario zıplayarak veya normalde alabilsin)
-            const heightOption = Math.random();
-            let height = 65; // Normal zıplama hizası
-            if (heightOption < 0.3) height = 15; // Yer hizası
-            else if (heightOption > 0.7) height = 110; // Yüksek zıplama hizası
+        // --- MARIO OYUN FİZİĞİ VE AKIŞ MANTIĞI ---
+        let isGameRunning = false;
+        let isJumpingState = false;
+        let verticalSpeed = 0;
+        let marioPositionHeightY = 0; // Yerden yükseklik
 
-            coin.style.bottom = `${height + groundLevel}px`;
-            coin.innerHTML = `<span class="text-[10px] font-black text-yellow-800">$</span>`;
+        const physicsGravity = 0.72; // Yerçekimi katsayısı
+        const groundThreshold = 48; // Zemin yüksekliği (px)
+        const charBoundingWidth = 40;
+        const charBoundingHeight = 48;
+        const charFixedX = 48; // Sol taraftan olan mesafe
 
-            coinsContainer.appendChild(coin);
+        let airJumpCounter = 0;
+        const maxConsecutiveJumps = 3; // Ardışık zıplama sınırı
+
+        let spawnIntervalTimer = null;
+        let physicalStepLoop = null;
+        let objectMovingSpeed = 4.2; // Nesnelerin akış sürati
+
+        // Oyunu Lobi Üzerinden Açma
+        function launchMario() {
+            document.getElementById("mario-screen").style.display = "block";
+            document.getElementById("mario-start-overlay").style.display = "flex";
+            document.getElementById("mario-over-overlay").style.display = "none";
+            document.getElementById("mario-current-score").innerText = playerAccount.money;
         }
 
-        // Para Toplama Olayı
-        function collectCoin(coinElement) {
-            coinElement.remove();
-            score += 1; // Her altın 1 TL
-            scoreDisplay.innerText = `${score} TL`;
-            
-            // Toplama görsel efekti
-            const pulse = document.createElement('div');
+        // Mario Oyununu Durdurup Lobiye Çıkma
+        function exitMario() {
+            isGameRunning = false;
+            clearTimeout(spawnIntervalTimer);
+            clearInterval(physicalStepLoop);
+
+            document.getElementById("mario-screen").style.display = "none";
+            document.getElementById("money").innerText = playerAccount.money;
+            saveDataToStorage();
+        }
+
+        // Yeni Mario Oyununu Başlatma
+        function startMarioGame() {
+            document.getElementById("mario-start-overlay").style.display = "none";
+            document.getElementById("mario-over-overlay").style.display = "none";
+            document.getElementById("mario-objects-container").innerHTML = "";
+
+            isGameRunning = true;
+            objectMovingSpeed = 4.2;
+            marioPositionHeightY = 0;
+            verticalSpeed = 0;
+            airJumpCounter = 0;
+            isJumpingState = false;
+            document.getElementById("mario-char").style.bottom = `${groundThreshold}px`;
+            updatePipsUI();
+
+            // 60FPS Fiziksel Hesaplama Döngüsü
+            physicalStepLoop = setInterval(runMainPhysics, 1000 / 60);
+
+            // Sonsuz Düzen Engel Üreticisi
+            generateEntitiesFlow();
+
+            triggerToast("Oyun başladı! Bol şans!", "🍄");
+        }
+
+        function updatePipsUI() {
+            const availableJumps = maxConsecutiveJumps - airJumpCounter;
+            for (let i = 1; i <= 3; i++) {
+                const pip = document.getElementById(`pip-${i}`);
+                if (i <= availableJumps) {
+                    pip.style.background = "#22c55e"; // Hak var (Yeşil)
+                } else {
+                    pip.style.background = "#ef4444"; // Hak bitti (Kırmızı)
+                }
+            }
+        }
+
+        function executeJumpAction() {
+            if (!isGameRunning) return;
+
+            if (airJumpCounter < maxConsecutiveJumps) {
+                isJumpingState = true;
+                airJumpCounter++;
+                verticalSpeed = 11.2; // İvme gücü
+
+                // Havada çift/üçlü zıplamada beliren duman pufu
+                if (airJumpCounter > 1) {
+                    spawnJumpPuffCloud();
+                }
+
+                updatePipsUI();
+
+                // Mario Sıkışma-Esnetme Animasyonu
+                const charEl = document.getElementById("mario-char");
+                charEl.style.transform = "scaleY(1.2)";
+                setTimeout(() => { charEl.style.transform = "scaleY(1)"; }, 100);
+            }
+        }
+
+        function spawnJumpPuffCloud() {
+            const puff = document.createElement("div");
+            puff.className = "jump-puff-effect";
+            puff.style.left = `${charFixedX + 4}px`;
+            puff.style.bottom = `${groundThreshold + marioPositionHeightY}px`;
+            document.getElementById("mario-viewport").appendChild(puff);
+            setTimeout(() => puff.remove(), 250);
+        }
+
+        function runMainPhysics() {
+            if (!isGameRunning) return;
+
+            // Yerçekimi ve Yükseklik Dengesi
+            if (isJumpingState || marioPositionHeightY > 0) {
+                verticalSpeed -= physicsGravity;
+                marioPositionHeightY += verticalSpeed;
+
+                if (marioPositionHeightY <= 0) {
+                    marioPositionHeightY = 0;
+                    isJumpingState = false;
+                    verticalSpeed = 0;
+                    airJumpCounter = 0; // Hakları sıfırla
+                    updatePipsUI();
+                }
+                document.getElementById("mario-char").style.bottom = `${groundThreshold + marioPositionHeightY}px`;
+            }
+
+            // Gelen nesneleri güncelle ve çarpışmaları sorgula
+            updateSolaKayanNesneler();
+        }
+
+        function updateSolaKayanNesneler() {
+            const container = document.getElementById("mario-objects-container");
+            const entities = container.querySelectorAll(".game-obj");
+            let isStuckOnBlock = false;
+
+            entities.forEach(entity => {
+                let currentLeft = parseFloat(entity.style.left);
+                currentLeft -= objectMovingSpeed;
+                entity.style.left = `${currentLeft}px`;
+
+                // Görüş alanından çıkan nesneleri temizle
+                if (currentLeft < -60) {
+                    entity.remove();
+                    return;
+                }
+
+                const type = entity.dataset.type;
+                const entityBottom = parseFloat(entity.style.bottom);
+                const entityWidth = parseFloat(entity.style.width);
+                const entityHeight = parseFloat(entity.style.height);
+
+                // Karakter Koordinat Sınırları
+                const mLeft = charFixedX;
+                const mRight = charFixedX + charBoundingWidth;
+                const mBottom = groundThreshold + marioPositionHeightY;
+                const mTop = mBottom + charBoundingHeight;
+
+                // Nesnenin Koordinat Sınırları
+                const eLeft = currentLeft;
+                const eRight = currentLeft + entityWidth;
+                const eBottom = entityBottom;
+                const eTop = eBottom + entityHeight;
+
+                // Kesişme Kontrolü (AABB)
+                if (mRight > eLeft && mLeft < eRight) {
+                    
+                    // 1. Durum: Ölümcül Engeller (Boru / Diken)
+                    if (type === "obstacle") {
+                        if (mBottom < eTop && mTop > eBottom) {
+                            handleGameOver();
+                        }
+                    }
+
+                    // 2. Durum: Platformlar (Soru İşareti ve Tuğlalar)
+                    if (type === "question" || type === "brick") {
+                        // Üzerine inme / basma kontrolü
+                        if (verticalSpeed <= 0 && mBottom >= eTop - 12 && mBottom <= eTop + 2) {
+                            marioPositionHeightY = eTop - groundThreshold;
+                            verticalSpeed = 0;
+                            isJumpingState = false;
+                            airJumpCounter = 0; // Hakları yenile
+                            updatePipsUI();
+                            isStuckOnBlock = true;
+                        }
+                        // Alttan kafa atma kontrolü
+                        else if (verticalSpeed > 0 && mTop >= eBottom && mBottom < eBottom) {
+                            verticalSpeed = -2.5; // Sekme hızı
+                            marioPositionHeightY = eBottom - groundThreshold - charBoundingHeight - 1;
+                            headbuttBlock(entity);
+                        }
+                    }
+
+                    // 3. Durum: Serbest Altınlar
+                    if (type === "coin") {
+                        if (mTop > eBottom && mBottom < eTop) {
+                            collectCoinItem(entity);
+                        }
+                    }
+                }
+            });
+
+            // Altında bir blok kalmadığında süzülerek düşüşe geçmesini sağlama
+            if (!isStuckOnBlock && marioPositionHeightY > 0 && !isJumpingState) {
+                isJumpingState = true;
+                verticalSpeed = -1;
+            }
+        }
+
+        function headbuttBlock(block) {
+            if (block.dataset.used === "true") return;
+
+            // Sarsılma Tepkisi Animasyonu
+            block.style.transform = "translateY(-10px)";
+            setTimeout(() => { block.style.transform = "translateY(0)"; }, 80);
+
+            if (block.dataset.type === "question") {
+                block.dataset.used = "true";
+                block.classList.remove("question-block-anim");
+                block.style.backgroundColor = "#44403c"; // Boş gri blok rengi
+                block.style.borderColor = "#292524";
+                block.innerHTML = `
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0.3;">
+                        <div style="width: 5px; height: 5px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px;"></div>
+                        <div style="width: 5px; height: 5px; background: white; border-radius: 50%; position: absolute; top: 3px; right: 3px;"></div>
+                    </div>
+                `;
+
+                const blockLeft = parseFloat(block.style.left);
+                const blockBottom = parseFloat(block.style.bottom);
+                spawnFlyingCoinFromBlock(blockLeft + 8, blockBottom + 32);
+            }
+        }
+
+        function spawnFlyingCoinFromBlock(x, y) {
+            const fCoin = document.createElement("div");
+            fCoin.className = "game-obj";
+            fCoin.style.position = "absolute";
+            fCoin.style.width = "22px";
+            fCoin.style.height = "22px";
+            fCoin.style.background = "#facc15";
+            fCoin.style.border = "2px solid #ca8a04";
+            fCoin.style.borderRadius = "50%";
+            fCoin.style.display = "flex";
+            fCoin.style.alignItems = "center";
+            fCoin.style.justifyContent = "center";
+            fCoin.style.zIndex = "10";
+            fCoin.style.transition = "all 0.3s ease-out";
+            fCoin.style.left = `${x}px`;
+            fCoin.style.bottom = `${y}px`;
+            fCoin.innerHTML = `<span style="font-size: 10px; font-weight: bold; color: #854d0e;">$</span>`;
+
+            document.getElementById("mario-objects-container").appendChild(fCoin);
+
+            setTimeout(() => {
+                fCoin.style.bottom = `${y + 35}px`;
+                fCoin.style.opacity = "0";
+                fCoin.style.transform = "scale(1.1)";
+            }, 10);
+
+            incrementScore(1);
+
+            setTimeout(() => { fCoin.remove(); }, 300);
+        }
+
+        function collectCoinItem(coin) {
+            coin.remove();
+            incrementScore(1);
+
+            // Altın Toplama Puan Animasyonu (+1 TL)
+            const pulse = document.createElement("div");
             pulse.innerText = "+1 TL";
-            pulse.className = "absolute text-yellow-300 font-black text-sm animate-ping pointer-events-none";
-            pulse.style.left = "45px";
-            pulse.style.bottom = `${groundLevel + marioY + 50}px`;
-            gameContainer.appendChild(pulse);
+            pulse.style.position = "absolute";
+            pulse.style.color = "#fde047";
+            pulse.style.fontWeight = "bold";
+            pulse.style.fontSize = "12px";
+            pulse.style.pointerEvents = "none";
+            pulse.className = "animate-ping";
+            pulse.style.left = `${charFixedX}px`;
+            pulse.style.bottom = `${groundThreshold + marioPositionHeightY + 40}px`;
+            document.getElementById("mario-viewport").appendChild(pulse);
             setTimeout(() => pulse.remove(), 600);
         }
 
-        // Oyunu Sonlandır
-        function endGame() {
-            isPlaying = false;
-            clearTimeout(obstacleTimer);
-            clearTimeout(coinTimer);
-            clearInterval(physicsInterval);
-
-            finalScore.innerText = `${score} TL`;
-            gameOverScreen.classList.remove('hidden');
-            
-            showToast("💥 Ah! Engele çarptın!", "😢");
+        function incrementScore(amount) {
+            playerAccount.money += amount;
+            saveDataToStorage();
+            document.getElementById("mario-current-score").innerText = playerAccount.money;
         }
 
-        // Yeniden Başlat
-        function resetGame() {
-            startGame();
+        // Sonsuz Akışta Nesne Üretme Mantığı
+        function generateEntitiesFlow() {
+            if (!isGameRunning) return;
+
+            const delay = Math.random() * 800 + 1000;
+            spawnIntervalTimer = setTimeout(() => {
+                chooseAndSpawnGroup();
+                generateEntitiesFlow();
+            }, delay);
         }
 
-        // Tost Bildirim Sistemi (Modern ve Akıcı)
-        function showToast(message, emoji = "🤖") {
-            const toastEmoji = document.getElementById('toast-emoji');
-            const toastText = document.getElementById('toast-text');
-
-            toastEmoji.innerText = emoji;
-            toastText.innerText = message;
-
-            toast.classList.remove('translate-y-10', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-
-            setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-10', 'opacity-0');
-            }, 2500);
+        function chooseAndSpawnGroup() {
+            const rand = Math.random();
+            if (rand < 0.35) {
+                createGroundObstacle();
+            } else if (rand < 0.75) {
+                createBlockObstacle();
+            } else {
+                createCoinRow();
+            }
         }
 
-        // Giriş Kontrolleri (Klavye)
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.code === 'ArrowUp') {
-                e.preventDefault(); // Sayfa kaymasını önler
-                jump();
+        function createGroundObstacle() {
+            const obs = document.createElement("div");
+            obs.className = "game-obj";
+            obs.style.position = "absolute";
+            obs.dataset.type = "obstacle";
+            obs.style.left = "100%";
+            obs.style.bottom = `${groundThreshold}px`;
+
+            const isPipe = Math.random() > 0.5;
+
+            if (isPipe) {
+                const height = Math.random() > 0.5 ? 40 : 28;
+                obs.style.height = `${height}px`;
+                obs.style.width = "28px";
+                obs.innerHTML = `
+                    <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div style="height: 16px; background: #16a34a; border: 2px solid black; border-radius: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                        <div style="flex: 1; background: #22c55e; border-left: 2px solid black; border-right: 2px solid black;"></div>
+                    </div>
+                `;
+            } else {
+                obs.style.height = "24px";
+                obs.style.width = "24px";
+                obs.innerHTML = `
+                    <div style="width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 24px solid #ef4444;"></div>
+                `;
+            }
+
+            document.getElementById("mario-objects-container").appendChild(obs);
+        }
+
+        function createBlockObstacle() {
+            const blockType = Math.random() > 0.5 ? "question" : "brick";
+            const heights = [groundThreshold + 50, groundThreshold + 95, groundThreshold + 130];
+            const chosenHeight = heights[Math.floor(Math.random() * heights.length)];
+
+            const block = document.createElement("div");
+            block.className = "game-obj";
+            block.style.position = "absolute";
+            block.style.border = "2px solid black";
+            block.style.borderRadius = "4px";
+            block.style.width = "32px";
+            block.style.height = "32px";
+            block.dataset.type = blockType;
+            block.dataset.used = "false";
+            block.style.left = "100%";
+            block.style.bottom = `${chosenHeight}px`;
+
+            if (blockType === "question") {
+                block.classList.add("question-block-anim");
+                block.style.display = "flex";
+                block.style.alignItems = "center";
+                block.style.justifyContent = "center";
+                block.innerHTML = `<span style="color: white; font-weight: bold; font-size: 14px;">?</span>`;
+            } else {
+                block.style.backgroundColor = "#ea580c";
+                block.innerHTML = `
+                    <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 2px; opacity: 0.9;">
+                        <div style="height: 6px; border-bottom: 1px solid rgba(0,0,0,0.3); display: flex; justify-content: space-between;">
+                            <div style="width: 8px; border-right: 1px solid rgba(0,0,0,0.3);"></div>
+                            <div style="width: 8px; border-right: 1px solid rgba(0,0,0,0.3);"></div>
+                        </div>
+                        <div style="flex: 1; display: flex; justify-content: space-between;">
+                            <div style="width: 4px; border-right: 1px solid rgba(0,0,0,0.3);"></div>
+                            <div style="width: 10px; border-right: 1px solid rgba(0,0,0,0.3);"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById("mario-objects-container").appendChild(block);
+
+            if (Math.random() > 0.6) {
+                setTimeout(() => {
+                    if (!isGameRunning) return;
+                    const secondBlock = block.cloneNode(true);
+                    secondBlock.style.left = "100%";
+                    document.getElementById("mario-objects-container").appendChild(secondBlock);
+                }, 160);
+            }
+        }
+
+        function createCoinRow() {
+            const spawnHeight = groundThreshold + (Math.random() > 0.5 ? 20 : 100);
+
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    if (!isGameRunning) return;
+
+                    const coin = document.createElement("div");
+                    coin.className = "game-obj";
+                    coin.style.position = "absolute";
+                    coin.style.width = "22px";
+                    coin.style.height = "22px";
+                    coin.style.background = "#facc15";
+                    coin.style.border = "2px solid #ca8a04";
+                    coin.style.borderRadius = "50%";
+                    coin.style.display = "flex";
+                    coin.style.alignItems = "center";
+                    coin.style.justifyContent = "center";
+                    coin.style.zIndex = "10";
+                    coin.dataset.type = "coin";
+                    coin.style.left = "100%";
+                    coin.style.bottom = `${spawnHeight}px`;
+                    coin.innerHTML = `<span style="font-size: 10px; font-weight: bold; color: #854d0e;">$</span>`;
+
+                    document.getElementById("mario-objects-container").appendChild(coin);
+                }, i * 180);
+            }
+        }
+
+        function handleGameOver() {
+            isGameRunning = false;
+            clearTimeout(spawnIntervalTimer);
+            clearInterval(physicalStepLoop);
+
+            document.getElementById("mario-final-score").innerText = playerAccount.money;
+            document.getElementById("mario-over-overlay").style.display = "flex";
+
+            triggerToast("Engele çarptın!", "😢");
+        }
+
+        // --- BİLDİRİM VE TOST SİSTEMİ ---
+        function triggerToast(text, emoji = "🍄") {
+            const toast = document.getElementById("toast-notification");
+            document.getElementById("toast-emoji").innerText = emoji;
+            document.getElementById("toast-message-text").innerText = text;
+
+            toast.classList.add("show");
+            setTimeout(() => { toast.classList.remove("show"); }, 2500);
+        }
+
+        // --- KONTROL OLAYI TETİKLEYİCİLERİ ---
+        const touchArea = document.getElementById("touch-jump-surface");
+        touchArea.addEventListener("touchstart", (e) => { e.preventDefault(); executeJumpAction(); });
+        touchArea.addEventListener("mousedown", (e) => { e.preventDefault(); executeJumpAction(); });
+
+        const rightJumpBtn = document.getElementById("right-jump-action-btn");
+        rightJumpBtn.addEventListener("touchstart", (e) => { e.preventDefault(); executeJumpAction(); });
+        rightJumpBtn.addEventListener("mousedown", (e) => { e.preventDefault(); executeJumpAction(); });
+
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space" || e.code === "ArrowUp") {
+                if (document.getElementById("mario-screen").style.display === "block") {
+                    e.preventDefault();
+                    executeJumpAction();
+                }
             }
         });
 
-        // Giriş Kontrolleri (Dokunmatik ve Mouse)
-        const jumpBtn = document.getElementById('jump-btn');
-        jumpBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            jump();
-        });
-        jumpBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            jump();
-        });
+        // --- ROBOT MESAJ DÖNGÜSÜ (Birebir Senin Listen) ---
+        let mesajlar = [
+            "Merhaba! 👋",
+            "Mario'yu denedin mi? 🍄",
+            "Mini Minecraft yakında! ⛏️",
+            "Bol şans! 🎮",
+            "TL kazanmaya devam et! 💰",
+            "Yeni oyunlar gelecek! ⭐",
+            "İyi eğlenceler! 😄",
+            "See you! 👋"
+        ];
+
+        setInterval(function() {
+            let r = Math.floor(Math.random() * mesajlar.length);
+            document.getElementById("message").innerHTML = mesajlar[r];
+        }, 4000);
     </script>
 </body>
 </html>
