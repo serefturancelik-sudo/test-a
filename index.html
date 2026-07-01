@@ -838,7 +838,6 @@ button:active {
             document.getElementById("mario-level").innerText = marioLevel;
             document.getElementById("mario-speed-val").innerText = objectMovingSpeed.toFixed(1);
             
-            // Lvl başına ilerleme mesafesini göster (350m'ye kadar)
             let relativeDistance = Math.floor(marioDistance % 500);
             if (isBossActive) {
                 document.getElementById("mario-progress").innerText = "PATRON SAVAŞI! 🔥";
@@ -915,7 +914,6 @@ button:active {
             bossFireTimer = 0;
             bossBlockTimer = 0;
 
-            // Boss HTML elementini yarat
             const boss = document.createElement("div");
             boss.id = "mario-boss";
             boss.className = "game-obj";
@@ -927,71 +925,40 @@ button:active {
             boss.style.bottom = `${bossY}px`;
             boss.style.zIndex = "22";
 
-            // Korkunç Retro Ejderha SVG Tasarımı (Ejderha kollar, sırt dikenleri, boynuzlar)
             boss.innerHTML = `
                 <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg">
-                    <!-- Sırt Dikenleri -->
                     <polygon points="10,35 25,25 25,45" fill="#ef4444" />
                     <polygon points="5,55 20,45 20,65" fill="#ef4444" />
                     <polygon points="12,75 25,65 25,85" fill="#ef4444" />
-                    
-                    <!-- Ejderha Gövdesi (Yeşil) -->
                     <rect x="20" y="30" width="50" height="50" fill="#15803d" rx="10" />
-                    
-                    <!-- Karın Bölgesi (Sarı) -->
                     <rect x="35" y="45" width="25" height="30" fill="#fbbf24" rx="5" />
-                    
-                    <!-- Kafa -->
                     <rect x="35" y="10" width="30" height="24" fill="#16a34a" rx="4" />
-                    
-                    <!-- Saç/Boynuzlar -->
                     <path d="M 45,10 L 40,0 L 45,12 Z" fill="#d97706" />
                     <path d="M 35,10 L 30,0 L 35,12 Z" fill="#d97706" />
-
-                    <!-- Ağız / Bıyık / Korkunç Diş -->
                     <rect x="38" y="18" width="12" height="4" fill="#14532d" />
                     <polygon points="38,22 42,26 46,22" fill="#fff" />
-                    <polygon style="margin-left:5px" points="44,22 48,26 52,22" fill="#fff" />
-
-                    <!-- Ejderha Gözü -->
+                    <polygon points="44,22 48,26 52,22" fill="#fff" />
                     <rect x="38" y="10" width="4" height="4" fill="#ff0000" />
                     <rect x="39" y="11" width="1" height="1" fill="#fff" />
-
-                    <!-- Kuyruk -->
                     <path d="M 12,38 L 0,44 L 12,48 Z" fill="#15803d" />
-
-                    <!-- Kanat (Mor Ejderha Kanadı) -->
                     <path d="M 30,35 C 10,20 15,10 5,20 C 15,35 25,45 30,45 Z" fill="#7c3aed" />
                 </svg>
             `;
-            document.getElementById("mario-objects-container").appendChild(pipeToScreen(boss));
             
-            // Canlı bakiye panelinde Canlı Can barını veya Level barlarını açalım
-            document.getElementById("market-money-display").innerText = playerAccount.money;
-            document.getElementById("mario-viewport").style.background = "linear-gradient(to bottom, #1e1b4b, #111827)"; // Karanlık gece modu boss kavgası
-
-            // Can barını göster
-            document.getElementById("mario-level").innerText = marioLevel;
-            updatePipsUI();
+            // Viewport'un en sağından başlasın
+            pipeToScreen(boss);
+            document.getElementById("mario-objects-container").appendChild(boss);
+            
+            document.getElementById("mario-viewport").style.background = "linear-gradient(to bottom, #1e1b4b, #111827)";
+            document.getElementById("boss-health-bar-container").style.display = "flex";
+            document.getElementById("boss-health-bar").style.width = "100%";
             updateLiveStats();
-            
-            // Market/Store modal güncellemeleri için
-            document.getElementById("market-money-display").innerText = playerAccount.money;
-
-            // Canlı Skor Mağaza
-            document.getElementById("live-score-board").style.borderColor = "#ec4899";
-        }
-
-        // Nesneyi viewport genişliğinin tam sağından başlatma (Hata giderici fonksiyon)
-        function pipeToRightEdge(el) {
-            const width = window.innerWidth;
-            el.style.left = `${width}px`;
         }
 
         function runMainPhysics() {
             if (!isGameRunning) return;
 
-            // Yol ve Level Atlama Mantığı
+            // Yol ve Seviye Atlatma
             let distanceIncrement = objectMovingSpeed * 0.05; 
             marioDistance += distanceIncrement;
             
@@ -1008,7 +975,6 @@ button:active {
 
             updateLiveStats();
 
-            // Yerçekimi ve Yükseklik Dengesi
             if (isJumpingState || marioPositionHeightY > 0) {
                 verticalSpeed -= physicsGravity;
                 marioPositionHeightY += verticalSpeed;
@@ -1017,13 +983,12 @@ button:active {
                     marioPositionHeightY = 0;
                     isJumpingState = false;
                     verticalSpeed = 0;
-                    airJumpCounter = 0; // Hakları sıfırla
+                    airJumpCounter = 0;
                     updatePipsUI();
                 }
                 document.getElementById("mario-char").style.bottom = `${groundThreshold + marioPositionHeightY}px`;
             }
 
-            // Gelen nesneleri güncelle ve çarpışmaları sorgula
             updateSolaKayanNesneler();
         }
 
@@ -1037,7 +1002,7 @@ button:active {
                 currentLeft -= objectMovingSpeed;
                 entity.style.left = `${currentLeft}px`;
 
-                // Görüş alanından çıkan nesneleri temizle
+                // Görüş alanından tamamen çıkınca sil
                 if (currentLeft < -120) {
                     entity.remove();
                     return;
@@ -1048,48 +1013,39 @@ button:active {
                 const entityWidth = parseFloat(entity.style.width);
                 const entityHeight = parseFloat(entity.style.height);
 
-                // Karakter Koordinat Sınırları
                 const mLeft = charFixedX;
                 const mRight = charFixedX + charBoundingWidth;
                 const mBottom = groundThreshold + marioPositionHeightY;
                 const mTop = mBottom + charBoundingHeight;
 
-                // Nesnenin Koordinat Sınırları
                 const eLeft = currentLeft;
                 const eRight = currentLeft + entityWidth;
                 const eBottom = entityBottom;
                 const eTop = eBottom + entityHeight;
 
-                // Kesişme Kontrolü (AABB)
                 if (mRight > eLeft && mLeft < eRight) {
-                    
-                    // 1. Durum: Ölümcül Engeller (Boru / Diken)
                     if (type === "obstacle") {
                         if (mBottom < eTop && mTop > eBottom) {
                             handleGameOver();
                         }
                     }
 
-                    // 2. Durum: Platformlar (Soru İşareti ve Tuğlalar)
                     if (type === "question" || type === "brick") {
-                        // Üzerine inme / basma kontrolü
                         if (verticalSpeed <= 0 && mBottom >= eTop - 12 && mBottom <= eTop + 2) {
                             marioPositionHeightY = eTop - groundThreshold;
                             verticalSpeed = 0;
                             isJumpingState = false;
-                            airJumpCounter = 0; // Hakları yenile
+                            airJumpCounter = 0;
                             updatePipsUI();
                             isStuckOnBlock = true;
                         }
-                        // Alttan kafa atma kontrolü
                         else if (verticalSpeed > 0 && mTop >= eBottom && mBottom < eBottom) {
-                            verticalSpeed = -2.5; // Sekme hızı
+                            verticalSpeed = -2.5;
                             marioPositionHeightY = eBottom - groundThreshold - charBoundingHeight - 1;
                             headbuttBlock(entity);
                         }
                     }
 
-                    // 3. Durum: Serbest Altınlar
                     if (type === "coin") {
                         if (mTop > eBottom && mBottom < eTop) {
                             collectCoinItem(entity);
@@ -1098,7 +1054,6 @@ button:active {
                 }
             });
 
-            // Altında bir platform kalmadığında süzülerek düşüşe geçmesini sağlama
             if (!isStuckOnBlock && marioPositionHeightY > 0 && !isJumpingState) {
                 isJumpingState = true;
                 verticalSpeed = -1;
@@ -1112,6 +1067,19 @@ button:active {
             setTimeout(() => { block.style.transform = "translateY(0)"; }, 80);
             
             playSound('hit');
+
+            // Eğer özel dövüş bloğuysa Boss'a mermi fırlat
+            if (block.dataset.special === "battle") {
+                block.dataset.used = "true";
+                block.style.backgroundColor = "#44403c";
+                block.style.borderColor = "#292524";
+                block.innerHTML = "";
+                
+                const blockLeft = parseFloat(block.style.left);
+                const blockBottom = parseFloat(block.style.bottom);
+                launchPlayerProjectile(blockLeft + 8, blockBottom + 32);
+                return;
+            }
 
             if (block.dataset.type === "question") {
                 block.dataset.used = "true";
@@ -1228,14 +1196,13 @@ button:active {
         function generateEntitiesFlow() {
             if (!isGameRunning) return;
 
-            // Mesafe 350m'ye gelirse boss tetiklensin!
+            // Seviye mesafesi kontrolü
             let relativeDist = marioDistance % 500;
             if (relativeDist >= 350 && !isBossActive && !isBossIncoming) {
                 triggerBossWarning();
                 return;
             }
 
-            // Boss savaşı sürerken normal spawnlama yapma
             if (isBossActive) {
                 runBossSpawningCycle();
                 return;
@@ -1251,11 +1218,10 @@ button:active {
             }, delay);
         }
 
-        // Boss Savaşı Sırasında Saldırı Ateş Topları ve Savaş Blokları Getirme
+        // Boss Savaşı Döngüsü
         function runBossSpawningCycle() {
             if (!isGameRunning) return;
 
-            // Boss'u hareket ettir (yukarı-aşağı kavisli hareket)
             const boss = document.getElementById("mario-boss");
             if (boss) {
                 bossY += bossDirection * 2;
@@ -1264,7 +1230,6 @@ button:active {
                 boss.style.bottom = `${bossY}px`;
             }
 
-            // Belirli aralıklarla ateş topu ve savaş bloğu fırlat
             bossFireTimer += 50;
             bossBlockTimer += 50;
 
@@ -1281,17 +1246,16 @@ button:active {
             spawnIntervalTimer = setTimeout(runBossSpawningCycle, 50);
         }
 
-        // Boss'un Mario'ya Ateş Topu Atması
+        // Boss'un Ateş Topu Atması
         function shootBossFireball() {
             const startX = getViewportWidth() - 90;
             
-            // Rastgele yüksekliklerde ateş topu
             const heights = [groundThreshold + 10, groundThreshold + 60, groundThreshold + 110];
             const chosenY = heights[Math.floor(Math.random() * heights.length)];
 
             const fireball = document.createElement("div");
             fireball.className = "game-obj";
-            fireball.dataset.type = "obstacle"; // Çarparsa ölürsün
+            fireball.dataset.type = "obstacle";
             fireball.style.position = "absolute";
             fireball.style.width = "20px";
             fireball.style.height = "20px";
@@ -1300,18 +1264,16 @@ button:active {
             fireball.style.left = `${startX}px`;
             fireball.style.bottom = `${chosenY}px`;
             fireball.style.border = "2px solid #b91c1c";
-            
-            // Ateş kıvılcım efekti
             fireball.style.boxShadow = "0 0 10px #f97316, 0 0 20px #ef4444";
 
             document.getElementById("mario-objects-container").appendChild(fireball);
             playSound('boss-shoot');
         }
 
-        // Mario'nun Vurup Boss'a Karşı Saldırı Başlatacağı Savaş Bloğu
+        // Saldırı Bloğu Üretme
         function spawnBattleAttackBlock() {
             const startX = getViewportWidth();
-            const chosenY = groundThreshold + 95; // Rahat kafa atabileceği hizası
+            const chosenY = groundThreshold + 95;
 
             const block = document.createElement("div");
             block.className = "game-obj battle-block-anim";
@@ -1320,13 +1282,12 @@ button:active {
             block.style.borderRadius = "6px";
             block.style.width = "34px";
             block.style.height = "34px";
-            block.dataset.type = "question"; // Kafa atıldığında soru işareti mantığıyla çalışacak
-            block.dataset.special = "battle"; // Özel dövüş bloğu etiketi
+            block.dataset.type = "question";
+            block.dataset.special = "battle";
             block.dataset.used = "false";
             block.style.left = `${startX}px`;
             block.style.bottom = `${chosenY}px`;
             
-            // Kılıç/Şimşek simgesi
             block.innerHTML = `
                 <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
                     <i class="fa-solid fa-bolt" style="color: white; font-size: 14px;"></i>
@@ -1335,7 +1296,7 @@ button:active {
             document.getElementById("mario-objects-container").appendChild(block);
         }
 
-        // Savaş Bloğuna Kafa Atınca Boss'a Sihirli Top Fırlatma
+        // Mario Mermisi Atma
         function launchPlayerProjectile(startX, startY) {
             const projectile = document.createElement("div");
             projectile.className = "game-obj player-fireball";
@@ -1351,7 +1312,6 @@ button:active {
             
             document.getElementById("mario-objects-container").appendChild(projectile);
 
-            // Mermi Süratle Sağa Boss'a Gider
             let projLoop = setInterval(() => {
                 if (!isGameRunning || !isBossActive) {
                     clearInterval(projLoop);
@@ -1360,17 +1320,15 @@ button:active {
                 }
 
                 let currentLeft = parseFloat(projectile.style.left);
-                currentLeft += 8.0; // Mermi hızı sola akan nesnelerden daha hızlıdır
+                currentLeft += 8.0; 
                 projectile.style.left = `${currentLeft}px`;
 
-                // Ekrandan çıkınca sil
                 if (currentLeft > getViewportWidth()) {
                     clearInterval(projLoop);
                     projectile.remove();
                     return;
                 }
 
-                // Boss ile Çarpışma Testi
                 const boss = document.getElementById("mario-boss");
                 if (boss) {
                     let bossLeft = getViewportWidth() - 110;
@@ -1388,11 +1346,9 @@ button:active {
             playSound('boss-hit');
             triggerToast("PATRONA HASAR VERİLDİ! 💥", "⚔️");
 
-            // Can Barını Güncelle
             let percent = (bossHP / bossMaxHP) * 100;
             document.getElementById("boss-health-bar").style.width = `${percent}%`;
 
-            // Boss sarsılma efekti
             const boss = document.getElementById("mario-boss");
             if (boss) {
                 boss.classList.add("boss-damage-shake");
@@ -1407,28 +1363,23 @@ button:active {
         function defeatBoss() {
             isBossActive = false;
             
-            // Boss elementini sil
             const boss = document.getElementById("mario-boss");
             if (boss) boss.remove();
 
-            // Savaş bitti can barını gizle
             document.getElementById("boss-health-bar-container").style.display = "none";
             document.getElementById("live-score-board").style.borderColor = "#333";
-            document.getElementById("mario-viewport").style.background = "linear-gradient(to bottom, #3b82f6, #93c5fd)"; // Gündüz modu geri döndü
+            document.getElementById("mario-viewport").style.background = "linear-gradient(to bottom, #3b82f6, #93c5fd)";
 
             playSound('level');
             triggerToast("TEBRİKLER! BOSS YENİLDİ! 🎉 (+25 TL)", "🏆");
             
-            // Ödülü ekle ve kaydet
             incrementScore(25);
 
-            // Seviyeyi direkt atla ve mesafeyi yeni levelin başına kur!
             marioDistance = marioLevel * 500; 
             marioLevel += 1;
             baseSpeed = 4.2 + (marioLevel - 1) * 0.8;
             objectMovingSpeed = baseSpeed;
 
-            // Normal akışı devam ettir
             clearTimeout(spawnIntervalTimer);
             generateEntitiesFlow();
         }
@@ -1443,7 +1394,20 @@ button:active {
             document.getElementById("mario-viewport").style.background = "linear-gradient(to bottom, #3b82f6, #93c5fd)";
         }
 
-        // --- DİNAMİK EKRAN GENİŞLİĞİNE GÖRE SPAWN HESAPLAMA ---
+        function chooseAndSpawnGroupPattern() {
+            const rand = Math.random();
+            if (rand < 0.25) {
+                createThreeBlockSpikePattern();
+            } else if (rand < 0.50) {
+                createDoublePipePattern();
+            } else if (rand < 0.75) {
+                createQuestionBlockAndCoins();
+            } else {
+                createBrickStairPattern();
+            }
+        }
+
+        // --- DİNAMİK EN SAĞ HESAPLAMA ---
         function getViewportWidth() {
             const viewport = document.getElementById("mario-viewport");
             return viewport ? viewport.clientWidth : window.innerWidth;
@@ -1454,12 +1418,11 @@ button:active {
             return el;
         }
 
-        // PARKUR A: 3 Blok ve Altlarında Diken (Uyumlu!)
+        // PARKUR A: 3 Blok ve Altlarında Diken
         function createThreeBlockSpikePattern() {
             const startX = getViewportWidth();
             const height = groundThreshold + 85;
 
-            // Altına Kırmızı Diken Yerleştir
             const spike = document.createElement("div");
             spike.className = "game-obj";
             spike.style.position = "absolute";
@@ -1473,7 +1436,6 @@ button:active {
             `;
             document.getElementById("mario-objects-container").appendChild(spike);
 
-            // Üstüne 3 adet blok diz
             for (let i = 0; i < 3; i++) {
                 setTimeout(() => {
                     if (!isGameRunning || isBossActive) return;
@@ -1488,6 +1450,7 @@ button:active {
                     block.style.backgroundColor = "#ea580c";
                     block.dataset.type = "brick";
                     
+                    // Tam olarak ekran genişliğine göre en sağdan sıralansın
                     block.style.left = `${getViewportWidth() + (i * 34)}px`;
                     block.style.bottom = `${height}px`;
                     block.innerHTML = `
@@ -1626,6 +1589,7 @@ button:active {
             }
         }
 
+        // Oyunu Kaybetme Yönetimi
         function handleGameOver() {
             isGameRunning = false;
             clearTimeout(spawnIntervalTimer);
