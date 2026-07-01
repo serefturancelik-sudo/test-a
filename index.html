@@ -1,61 +1,119 @@
+
 ```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Beko Mini Oyunlar V7</title>
-<style>
-    body { background: #111; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; }
-    #login, #main { width: 100%; max-width: 360px; padding: 20px; }
-    .version { font-size: 10px; color: #666; margin-top: 10px; }
-    .game { background: #222; padding: 20px; margin: 10px 0; border-radius: 10px; cursor: pointer; border: 1px solid #444; }
-    #mario-screen { display: none; position: fixed; inset: 0; background: #3b82f6; z-index: 100; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mario V6</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #64b5f6; font-family: sans-serif; }
+        #game-container { width: 100vw; height: 100vh; position: relative; }
+        
+        .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #8b4513; border-top: 5px solid #2e7d32; }
+        
+        #mario { 
+            width: 40px; height: 40px; background: red; 
+            position: absolute; bottom: 60px; left: 50px; 
+            transition: bottom 0.1s ease-out; z-index: 10;
+        }
+        
+        /* Engel stili - Görünür olması için belirginleştirildi */
+        .obstacle { 
+            width: 35px; height: 45px; background: #2e7d32; 
+            position: absolute; bottom: 60px; z-index: 5;
+            border: 2px solid #1b5e20;
+        }
+        
+        #info-panel { 
+            position: absolute; top: 20px; right: 20px; 
+            background: #1a1a1a; color: #fff; padding: 15px; 
+            border-radius: 12px; width: 140px; z-index: 20;
+        }
+        
+        #jump-btn { 
+            position: absolute; bottom: 40px; right: 20px; 
+            width: 150px; height: 70px; background: #ff5252; 
+            border: none; color: white; font-weight: bold; 
+            font-size: 20px; border-radius: 10px; z-index: 20;
+        }
+    </style>
 </head>
 <body>
 
-    <div id="login">
-        <h1>🎮 Beko V7</h1>
-        <input id="name" placeholder="Kullanıcı Adı" style="width: 100%; padding: 10px; border-radius: 5px; border: none;">
-        <button onclick="start()" style="width: 100%; padding: 10px; margin-top: 10px; background: #22c55e; border: none; color: white;">Başla</button>
-        <div class="version">Sürüm: V7</div>
+<div id="game-container">
+    <div id="info-panel">
+        <div>Level: 1</div>
+        <div>Hız: 4.2</div>
+        <div>Bakiye: <span id="bakiye">586</span> TL</div>
+        <div>İlerleme: <span id="ilerleme">0</span> / 350m</div>
     </div>
 
-    <div id="main" style="display:none;">
-        <h2 id="welcome"></h2>
-        <div class="game" onclick="launchMario()">🍄 Mario (Boss'lu V7)</div>
-        <div class="game" onclick="alert('Minecraft yakında...')">⛏️ Minecraft (Yakında)</div>
-        <div class="game" onclick="openStore()">🛒 Mağaza (300 TL'n var)</div>
-    </div>
+    <div id="mario"></div>
+    <div class="ground"></div>
+    <button id="jump-btn">⚡ ZIPLA!<br><small>3 HAK</small></button>
+</div>
 
-    <div id="mario-screen">
-        <button onclick="document.getElementById('mario-screen').style.display='none'" style="position:fixed; top:10px; left:10px; z-index:101;">Çıkış</button>
-        <div id="boss-alert" style="display:none; position:fixed; top:20%; width:100%; text-align:center; font-size:30px; color:red;">BOSS GELİYOR!</div>
-    </div>
+<script>
+    const mario = document.getElementById('mario');
+    const ilerlemeEl = document.getElementById('ilerleme');
+    let isJumping = false;
+    let distance = 0;
 
-    <script>
-        function start() {
-            const name = document.getElementById("name").value;
-            if(!name) return;
-            localStorage.setItem("beko_username", name);
-            // Kendi paranı korumak için varsa çek, yoksa 300 yap
-            if(!localStorage.getItem("beko_money")) localStorage.setItem("beko_money", "300");
-            document.getElementById("welcome").innerText = "Hoş geldin " + name;
-            document.getElementById("login").style.display = "none";
-            document.getElementById("main").style.display = "block";
-        }
+    function jump() {
+        if (isJumping) return;
+        isJumping = true;
+        let pos = 0;
+        let timer = setInterval(() => {
+            if (pos >= 120) {
+                clearInterval(timer);
+                let down = setInterval(() => {
+                    if (pos <= 0) {
+                        clearInterval(down);
+                        isJumping = false;
+                    } else {
+                        pos -= 10;
+                        mario.style.bottom = (60 + pos) + 'px';
+                    }
+                }, 30);
+            } else {
+                pos += 10;
+                mario.style.bottom = (60 + pos) + 'px';
+            }
+        }, 30);
+    }
 
-        function openStore() {
-            let money = localStorage.getItem("beko_money");
-            alert("Mağaza sistemimiz hazırlanıyor! Şu an " + money + " TL'n var.");
-        }
+    function spawnObstacle() {
+        const obs = document.createElement('div');
+        obs.classList.add('obstacle');
+        obs.style.left = '100vw';
+        document.getElementById('game-container').appendChild(obs);
 
-        function launchMario() {
-            document.getElementById("mario-screen").style.display = "block";
-            // Boss mantığı burada level 4'te çalışacak şekilde tetiklenecek
-        }
-    </script>
+        let obsPos = window.innerWidth;
+        let move = setInterval(() => {
+            obsPos -= 10;
+            obs.style.left = obsPos + 'px';
+
+            // Çarpışma: Mario'nun konumu ile engelin konumu çakışırsa
+            if (obsPos < 90 && obsPos > 50 && parseInt(mario.style.bottom) < 100) {
+                clearInterval(move);
+                alert("Engellere çarptın!");
+                location.reload();
+            }
+
+            if (obsPos < -50) {
+                clearInterval(move);
+                obs.remove();
+                distance += 50;
+                ilerlemeEl.innerText = distance;
+            }
+        }, 30);
+        setTimeout(spawnObstacle, 2000);
+    }
+
+    document.getElementById('jump-btn').addEventListener('click', jump);
+    spawnObstacle();
+</script>
 </body>
 </html>
 
